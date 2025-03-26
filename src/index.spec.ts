@@ -1,5 +1,9 @@
-import { DQNSolver, DQNOpt, DQNEnv } from '.';
-import { TDSolver, TDOpt, TDEnv } from '.';
+import { DQNEnv } from "./dqn/dqn-env";
+import { DQNOpt } from "./dqn/dqn-opt";
+import { DQNSolver } from "./dqn/dqn-solver";
+import { TDEnv } from "./td/td-env";
+import { TDOpt } from "./td/td-opt";
+import { TDSolver } from "./td/td-solver";
 
 describe('Given the imports, the example code should execute just fine', () => {
   // Environmental Variables
@@ -42,7 +46,7 @@ describe('Given the imports, the example code should execute just fine', () => {
       /*
       Determine a state, e.g.:
       */
-      const state = [ /* Array with numerical values and length of 20 as configured via numberOfStates */ ];
+      const state = [ /* Array with numerical values and length of 20 as configured via numberOfStates */];
 
       /*
       Now inject state and receive the preferred action as index from 0 to 3 as configured via numberOfActions.
@@ -87,7 +91,7 @@ describe('Given the imports, the example code should execute just fine', () => {
       Now inject state and receive the preferred action as index from 0 to 3 as configured via numberOfActions.
       */
       const action = tdSolver.decide(state);
-      
+
       /*
       Now calculate some Reward and let the Solver learn from it, e.g.:
       */
