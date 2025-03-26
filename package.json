@@ -28,11 +28,11 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "prepare": "npm run test",
-    "test": "./node_modules/.bin/jasmine --config=jasmine.json",
+    "test": "npx jasmine --config=jasmine.json",
     "pretest": "npm run build",
-    "build": "./node_modules/.bin/tsc -p .",
-    "prebuild": "./node_modules/.bin/rimraf dist",
-    "posttest": "./node_modules/.bin/rimraf dist/*.spec.* dist/*.doubles.*"
+    "build": "npx tsc -p .",
+    "prebuild": "rimraf dist",
+    "posttest": "rimraf dist/*.spec.* dist/*.doubles.*"
   },
   "author": "Menno van Rahden",
   "homepage": "https://github.com/mvrahden/reinforce-js#readme",
@@ -46,7 +46,12 @@
   "license": "MIT",
   "devDependencies": {
     "@types/jasmine": "^2.8.8",
+    "istanbul": "^0.4.5",
     "jasmine": "^2.99.0",
+    "karma": "^6.4.4",
+    "karma-chrome-launcher": "^3.2.0",
+    "karma-coverage": "^2.2.1",
+    "karma-jasmine": "^5.1.0",
     "rimraf": "^2.6.2",
     "typescript": "^2.9.2"
   },
