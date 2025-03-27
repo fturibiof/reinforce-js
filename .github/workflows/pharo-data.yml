@@ -2,8 +2,9 @@
 name: Pharo Data Generation
 
 on:
-  pull_request:
-    branches: '*'
+  push:
+    branches:
+      - test-github-actions
 
 jobs:
   build:
