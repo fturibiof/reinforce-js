@@ -2,7 +2,7 @@ import { Utils } from 'recurrent-js';
 
 import { Solver, TDEnv, TDOpt } from './../.';
 
-// Trigger
+// Trigger 2
 
 export class TDSolver extends Solver {
   protected readonly alpha: number;
