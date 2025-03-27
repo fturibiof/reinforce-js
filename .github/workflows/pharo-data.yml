@@ -22,9 +22,22 @@ jobs:
         uses: hpi-swa/setup-smalltalkCI@v1
         with:
           smalltalk-image: ${{ matrix.smalltalk }}
+      - name: Verify VM and Image Installation
+        run: |
+          echo "Checking if VM exists at $SMALLTALK_CI_VM"
+          if [ ! -f "$SMALLTALK_CI_VM" ]; then
+            echo "VM not found. Exiting."
+            exit 1
+          fi
+          echo "Checking if Image exists at $SMALLTALK_CI_IMAGE"
+          if [ ! -f "$SMALLTALK_CI_IMAGE" ]; then
+            echo "Image not found. Exiting."
+            exit 1
+          fi
 
       - name: Generate pharo data
         run: |
+          ls -l /home/runner/.smalltalkCI/_builds
           $SMALLTALK_CI_VM $SMALLTALK_CI_IMAGE eval "| data filePath writer |
           data := #((#'ID' #'Name' #'Age') (1 'Alice' 30) (2 'Bob' 25) (3 'Charlie' 35)).
           filePath := 'exported_', Date today yyyymmdd, '.csv'.
