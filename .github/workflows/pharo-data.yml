@@ -23,8 +23,10 @@ jobs:
         uses: hpi-swa/setup-smalltalkCI@v1
         with:
           smalltalk-image: ${{ matrix.smalltalk }}
-      - name: List Build Directory
-        run: ls -R /home/runner/.smalltalkCI/
+      # Run the tests
+      - run: smalltalkci -s ${{ matrix.smalltalk }}
+        shell: bash
+        timeout-minutes: 15
       - name: Find Pharo VM and Image
         run: |
           echo "Looking for Pharo VM..."
