@@ -1,0 +1,48 @@
+# .github/workflows/pharo-data.yml
+name: Pharo Data Generation
+
+on:
+  pull_request:
+    branches: '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        smalltalk: [Moose64-11]
+    name: ${{ matrix.smalltalk }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Setup SmalltalkCI
+        uses: hpi-swa/setup-smalltalkCI@v1
+        with:
+          smalltalk-image: ${{ matrix.smalltalk }}
+
+      - name: Generate pharo data
+        run: |
+          $SMALLTALK_CI_VM $SMALLTALK_CI_IMAGE eval "| data filePath writer |
+          data := #((#'ID' #'Name' #'Age') (1 'Alice' 30) (2 'Bob' 25) (3 'Charlie' 35)).
+          filePath := 'exported_', Date today yyyymmdd, '.csv'.
+          writer := NeoCSVWriter on: filePath asFileReference writeStream.
+          writer nextPutAll: data.
+          writer close."
+
+      - name: Move csv to folder
+        run: |
+          mkdir -p pharo-data
+          mv *.csv pharo-data
+
+      - name: Push to current branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add pharo-data
+          git commit -m "Update pharo-data for branch ${{ github.ref_name }}"
+          git push origin HEAD:refs/heads/${{ github.ref_name }}
