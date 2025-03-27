@@ -27,6 +27,15 @@ jobs:
       - run: smalltalkci -s ${{ matrix.smalltalk }}
         shell: bash
         timeout-minutes: 15
+      - name: Verify SmalltalkCI Setup
+        run: |
+          echo "Listing SmalltalkCI directories..."
+          ls -l /home/runner/.smalltalkCI/
+          echo "Checking builds..."
+          ls -l /home/runner/.smalltalkCI/_builds || echo "No builds directory"
+          echo "Checking VMs..."
+          ls -l /home/runner/.smalltalkCI/_cache/vms || echo "No VMs found"
+
       - name: Find Pharo VM and Image
         run: |
           echo "Looking for Pharo VM..."
@@ -35,7 +44,6 @@ jobs:
           find /home/runner/.smalltalkCI/ -name '*.image' -type f || echo "No Image found"
       - name: Generate pharo data
         run: |
-          ls -l /home/runner/.smalltalkCI/_builds
           $SMALLTALK_CI_VM $SMALLTALK_CI_IMAGE eval "| data filePath writer |
           data := #((#'ID' #'Name' #'Age') (1 'Alice' 30) (2 'Bob' 25) (3 'Charlie' 35)).
           filePath := 'exported_', Date today yyyymmdd, '.csv'.
