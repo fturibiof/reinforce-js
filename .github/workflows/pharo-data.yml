@@ -2,9 +2,8 @@
 name: Pharo Data Generation
 
 on:
-  push:
-    branches:
-      - test-github-actions
+  pull_request:
+    branches: '*'
 
 jobs:
   build:
@@ -23,19 +22,14 @@ jobs:
         uses: hpi-swa/setup-smalltalkCI@v1
         with:
           smalltalk-image: ${{ matrix.smalltalk }}
-      - name: Verify VM and Image Installation
+      - name: List Build Directory
+        run: ls -R /home/runner/.smalltalkCI/
+      - name: Find Pharo VM and Image
         run: |
-          echo "Checking if VM exists at $SMALLTALK_CI_VM"
-          if [ ! -f "$SMALLTALK_CI_VM" ]; then
-            echo "VM not found. Exiting."
-            exit 1
-          fi
-          echo "Checking if Image exists at $SMALLTALK_CI_IMAGE"
-          if [ ! -f "$SMALLTALK_CI_IMAGE" ]; then
-            echo "Image not found. Exiting."
-            exit 1
-          fi
-
+          echo "Looking for Pharo VM..."
+          find /home/runner/.smalltalkCI/ -name 'pharo' -type f || echo "No VM found"
+          echo "Looking for Pharo Image..."
+          find /home/runner/.smalltalkCI/ -name '*.image' -type f || echo "No Image found"
       - name: Generate pharo data
         run: |
           ls -l /home/runner/.smalltalkCI/_builds
