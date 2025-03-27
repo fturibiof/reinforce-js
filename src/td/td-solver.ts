@@ -112,7 +112,7 @@ export class TDSolver extends Solver {
     }
 
     const actionIndex = this.epsilonGreedyActionPolicy(allowedActions, probs);
-    
+
     // shift state memory
     this.shiftStateMemory(state, actionIndex);
 
@@ -153,69 +153,67 @@ export class TDSolver extends Solver {
 
   private learnFromTuple(s0: number, a0: number, r0: number, s1: number, a1: number, lambda: number): void {
     const sa = a0 * this.numberOfStates + s0;
-    let target;
-
-    // calculate the target for Q(s,a)
-    if (this.update === 'qlearn') {
-      // Q learning target is Q(s0,a0) = r0 + gamma * max_a Q[s1,a]
-      const poss = this.env.allowedActions(s1);
-      let qmax = 0;
-      for (let i = 0; i < poss.length; i++) {
-        const s1a = poss[i] * this.numberOfStates + s1;
-        const qval = this.Q[s1a];
-        if (i === 0 || qval > qmax) { qmax = qval; }
-      }
-      target = r0 + this.gamma * qmax;
-    } else if (this.update === 'sarsa') {
-      // SARSA target is Q(s0,a0) = r0 + gamma * Q[s1,a1]
-      const s1a1 = a1 * this.numberOfStates + s1;
-      target = r0 + this.gamma * this.Q[s1a1];
-    }
+    const target = this.calculateTarget(s0, a0, r0, s1, a1);
 
     if (lambda > 0) {
-      // perform an eligibility trace update
-
-      // TODO: Where does this come from?
-      // if (this.replacing_traces) {
-      if (null) {
-        this.eligibilityTraces[sa] = 1;
-      } else {
-        this.eligibilityTraces[sa] += 1;
-      }
-      const decay = lambda * this.gamma;
-      const stateUpdate = Utils.zeros(this.numberOfStates);
-      for (let s = 0; s < this.numberOfStates; s++) {
-        const poss = this.env.allowedActions(s);
-        for (let i = 0; i < poss.length; i++) {
-          const a = poss[i];
-          const saloop = a * this.numberOfStates + s;
-          const esa = this.eligibilityTraces[saloop];
-          const update = this.alpha * esa * (target - this.Q[saloop]);
-          this.Q[saloop] += update;
-          this.updatePriority(s, a, update);
-          this.eligibilityTraces[saloop] *= decay;
-          const u = Math.abs(update);
-          if (u > stateUpdate[s]) { stateUpdate[s] = u; }
-        }
-      }
-      for (let s = 0; s < this.numberOfStates; s++) {
-        if (stateUpdate[s] > 1e-5) { // save efficiency here
-          this.updatePolicy(s);
-        }
-      }
-      if (this.explored && this.update === 'qlearn') {
-        // have to wipe the trace since q learning is off-policy :(
-        this.eligibilityTraces = Utils.zeros(this.numberOfStates * this.numberOfActions);
-      }
+      this.performEligibilityTraceUpdate(sa, target, lambda);
     } else {
-      // simpler and faster update without eligibility trace
-      // update Q[sa] towards it with some step size
-      const update = this.alpha * (target - this.Q[sa]);
-      this.Q[sa] += update;
-      this.updatePriority(s0, a0, update);
-      // update the policy to reflect the change (if appropriate)
-      this.updatePolicy(s0);
+      this.simpleQUpdate(sa, s0, a0, target);
     }
+  }
+
+  private performEligibilityTraceUpdate(sa: number, target: number, lambda: number): void {
+    // Eligibility traces
+    this.eligibilityTraces[sa] = (this.eligibilityTraces[sa] || 0) + 1;
+    const decay = lambda * this.gamma;
+    const stateUpdate = Utils.zeros(this.numberOfStates);
+
+    for (let s = 0; s < this.numberOfStates; s++) {
+      const poss = this.env.allowedActions(s);
+      for (const a of poss) {
+        const saloop = a * this.numberOfStates + s;
+        const esa = this.eligibilityTraces[saloop] || 0;
+        const update = this.alpha * esa * (target - this.Q[saloop]);
+        this.Q[saloop] += update;
+        this.updatePriority(s, a, update);
+        this.eligibilityTraces[saloop] *= decay;
+        stateUpdate[s] = Math.max(stateUpdate[s], Math.abs(update));
+      }
+    }
+
+    for (let s = 0; s < stateUpdate.length; s++) {
+      if (stateUpdate[s] > 1e-5) {
+        this.updatePolicy(s);
+      }
+    }
+
+    if (this.explored && this.update === 'qlearn') {
+      this.eligibilityTraces = Utils.zeros(this.numberOfStates * this.numberOfActions);
+    }
+  }
+
+  private simpleQUpdate(sa: number, s0: number, a0: number, target: number): void {
+    const update = this.alpha * (target - this.Q[sa]);
+    this.Q[sa] += update;
+    this.updatePriority(s0, a0, update);
+    this.updatePolicy(s0);
+  }
+
+  private calculateTarget(s0: number, a0: number, r0: number, s1: number, a1: number): number {
+    if (this.update === 'qlearn') {
+      // Q-learning: Q(s0, a0) = r0 + gamma * max_a Q[s1, a]
+      const poss = this.env.allowedActions(s1);
+      const qmax = poss.reduce((max, action) => {
+        const s1a = action * this.numberOfStates + s1;
+        return Math.max(max, this.Q[s1a]);
+      }, 0);
+      return r0 + this.gamma * qmax;
+    } else if (this.update === 'sarsa') {
+      // SARSA: Q(s0, a0) = r0 + gamma * Q[s1, a1]
+      const s1a1 = a1 * this.numberOfStates + s1;
+      return r0 + this.gamma * this.Q[s1a1];
+    }
+    return 0;
   }
 
   private updateModel(s0, a0, r0, s1): void {
@@ -228,6 +226,7 @@ export class TDSolver extends Solver {
     this.envModelS[sa] = s1;
     this.envModelR[sa] = r0;
   }
+
 
   private plan(): void {
     // order the states based on current priority queue information
