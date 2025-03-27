@@ -2,6 +2,8 @@ import { Utils } from 'recurrent-js';
 
 import { Solver, TDEnv, TDOpt } from './../.';
 
+// Trigger
+
 export class TDSolver extends Solver {
   protected readonly alpha: number;
   protected readonly epsilon: number;
@@ -112,7 +114,7 @@ export class TDSolver extends Solver {
     }
 
     const actionIndex = this.epsilonGreedyActionPolicy(allowedActions, probs);
-    
+
     // shift state memory
     this.shiftStateMemory(state, actionIndex);
 
